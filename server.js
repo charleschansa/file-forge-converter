@@ -14,14 +14,18 @@ const PORT = 3700;
 let ffmpegPath = 'ffmpeg';
 let ffprobePath = 'ffprobe';
 
+const os = require('os');
+const isWindows = os.platform() === 'win32';
+const findCmd = isWindows ? 'where ffmpeg' : 'which ffmpeg';
+
 try {
-  const result = execSync('where ffmpeg', { encoding: 'utf-8' }).trim().split('\n')[0].trim();
+  const result = execSync(findCmd, { encoding: 'utf-8' }).trim().split('\n')[0].trim();
   if (result) {
     ffmpegPath = result;
     ffprobePath = result.replace(/ffmpeg(\.exe)?$/i, 'ffprobe$1');
     console.log(`  ✓ FFmpeg found at: ${ffmpegPath}`);
   }
-} catch {
+} catch (e) {
   const commonPaths = [
     'C:\\ffmpeg\\bin\\ffmpeg.exe',
     'C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe',

@@ -230,7 +230,7 @@ async function convertDocxToPdf(inputPath, outputPath, conversionId) {
   console.log(`[${conversionId}] Step 2: Rendering HTML → PDF with Puppeteer...`);
 
   // Step 2: HTML → PDF with Puppeteer
-  const puppeteer = require('puppeteer');
+  const puppeteer = (await import('puppeteer')).default;
   let browser;
   try {
     browser = await puppeteer.launch({

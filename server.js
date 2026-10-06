@@ -6,7 +6,7 @@ const fs = require('fs');
 const mammoth = require('mammoth');
 
 const app = express();
-const PORT = 3700;
+const PORT = process.env.PORT || 3700;
 
 // ============================================================
 // Find FFmpeg binary path — resolve it once at startup
@@ -263,10 +263,14 @@ async function convertDocxToPdf(inputPath, outputPath, conversionId) {
   const puppeteer = (await import('puppeteer')).default;
   let browser;
   try {
-    browser = await puppeteer.launch({
+    const launchOptions = {
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
-    });
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+    };
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+    browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
 

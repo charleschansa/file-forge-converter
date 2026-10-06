@@ -9,7 +9,6 @@ const fileCard = document.getElementById('fileCard');
 const fileName = document.getElementById('fileName');
 const fileSize = document.getElementById('fileSize');
 const removeFile = document.getElementById('removeFile');
-const formatOptions = document.getElementById('formatOptions');
 const convertBtn = document.getElementById('convertBtn');
 const progressSection = document.getElementById('progressSection');
 const progressLabel = document.getElementById('progressLabel');
@@ -22,7 +21,7 @@ const errorSection = document.getElementById('errorSection');
 const errorText = document.getElementById('errorText');
 const retryBtn = document.getElementById('retryBtn');
 
-// New elements for document support
+// UI Elements for formats & modes
 const fileIconMedia = document.getElementById('fileIconMedia');
 const fileIconDoc = document.getElementById('fileIconDoc');
 const fileIconContainer = document.getElementById('fileIconContainer');
@@ -31,14 +30,23 @@ const conversionType = document.getElementById('conversionType');
 const conversionTarget = document.getElementById('conversionTarget');
 const mediaFormatSection = document.getElementById('mediaFormatSection');
 const docFormatSection = document.getElementById('docFormatSection');
+const categoryTabs = document.getElementById('categoryTabs');
+const tabVideo = document.getElementById('tabVideo');
+const tabAudio = document.getElementById('tabAudio');
+const formatLabel = document.getElementById('formatLabel');
+const videoFormatOptions = document.getElementById('videoFormatOptions');
+const audioFormatOptions = document.getElementById('audioFormatOptions');
 
 let selectedFile = null;
-let selectedFormat = 'mp3';
+let selectedFormat = 'avi';
+let activeCategory = 'video'; // 'video' | 'audio'
 let currentConversionId = null;
 let progressPollInterval = null;
-let currentFileType = 'media'; // 'media' or 'document'
+let currentFileType = 'video'; // 'video' | 'audio' | 'document'
 
-// Document extensions
+// Extension categories
+const videoExtensions = ['.mp4', '.avi', '.mkv', '.mov', '.webm', '.flv', '.wmv', '.m4v', '.mpg', '.mpeg', '.3gp'];
+const audioExtensions = ['.mp3', '.wav', '.aac', '.ogg', '.flac', '.m4a', '.wma', '.aiff'];
 const docExtensions = ['.docx', '.doc'];
 
 // ===========================
@@ -49,7 +57,20 @@ function detectFileType(file) {
   if (docExtensions.includes(ext)) {
     return 'document';
   }
-  return 'media';
+  if (audioExtensions.includes(ext) || file.type.startsWith('audio/')) {
+    return 'audio';
+  }
+  return 'video';
+}
+
+function updateBadge(typeText, targetText, isDoc = false) {
+  conversionType.textContent = typeText;
+  conversionTarget.textContent = targetText;
+  if (isDoc) {
+    conversionBadge.classList.add('badge-doc-mode');
+  } else {
+    conversionBadge.classList.remove('badge-doc-mode');
+  }
 }
 
 // ===========================
@@ -89,6 +110,7 @@ fileInput.addEventListener('change', () => {
 function handleFile(file) {
   selectedFile = file;
   currentFileType = detectFileType(file);
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
 
   fileName.textContent = file.name;
   fileSize.textContent = formatBytes(file.size);
@@ -101,23 +123,49 @@ function handleFile(file) {
     fileIconContainer.classList.add('file-icon-doc');
     mediaFormatSection.classList.add('hidden');
     docFormatSection.classList.remove('hidden');
-    conversionType.textContent = 'Document';
-    conversionTarget.textContent = 'PDF';
-    conversionBadge.classList.add('badge-doc-mode');
-  } else {
-    selectedFormat = 'mp3';
+    updateBadge('Document Conversion', 'PDF', true);
+  } else if (currentFileType === 'audio') {
     fileIconMedia.classList.remove('hidden');
     fileIconDoc.classList.add('hidden');
     fileIconContainer.classList.remove('file-icon-doc');
     mediaFormatSection.classList.remove('hidden');
     docFormatSection.classList.add('hidden');
-    conversionType.textContent = 'Media';
-    conversionTarget.textContent = 'Audio';
-    conversionBadge.classList.remove('badge-doc-mode');
+    categoryTabs.classList.add('hidden');
+    videoFormatOptions.classList.add('hidden');
+    audioFormatOptions.classList.remove('hidden');
+    formatLabel.textContent = 'Convert to Audio:';
 
-    // Reset media format selection
-    document.querySelectorAll('#formatOptions .format-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector('#formatOptions .format-btn[data-format="mp3"]').classList.add('active');
+    // Pick sensible default format
+    selectedFormat = (ext === '.mp3') ? 'wav' : 'mp3';
+    setFormatButtonActive(audioFormatOptions, selectedFormat);
+    updateBadge('Audio Conversion', selectedFormat.toUpperCase());
+  } else {
+    // Video input
+    fileIconMedia.classList.remove('hidden');
+    fileIconDoc.classList.add('hidden');
+    fileIconContainer.classList.remove('file-icon-doc');
+    mediaFormatSection.classList.remove('hidden');
+    docFormatSection.classList.add('hidden');
+    categoryTabs.classList.remove('hidden');
+
+    // Default to video category
+    activeCategory = 'video';
+    tabVideo.classList.add('active');
+    tabAudio.classList.remove('active');
+    videoFormatOptions.classList.remove('hidden');
+    audioFormatOptions.classList.add('hidden');
+    formatLabel.textContent = 'Convert to Video:';
+
+    // Default target format: if mp4 uploaded, default to avi (or mkv)
+    if (ext === '.avi') {
+      selectedFormat = 'mp4';
+    } else if (ext === '.mkv') {
+      selectedFormat = 'mp4';
+    } else {
+      selectedFormat = 'avi';
+    }
+    setFormatButtonActive(videoFormatOptions, selectedFormat);
+    updateBadge('Video Conversion', selectedFormat.toUpperCase());
   }
 
   dropZone.classList.add('hidden');
@@ -131,6 +179,16 @@ function handleFile(file) {
   errorSection.classList.add('hidden');
 }
 
+function setFormatButtonActive(container, format) {
+  container.querySelectorAll('.format-btn').forEach(b => {
+    if (b.dataset.format === format) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
+  });
+}
+
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -142,7 +200,7 @@ function formatBytes(bytes) {
 function resetToDropZone() {
   selectedFile = null;
   currentConversionId = null;
-  currentFileType = 'media';
+  currentFileType = 'video';
   fileInput.value = '';
   fileCard.classList.add('hidden');
   dropZone.classList.remove('hidden');
@@ -157,15 +215,70 @@ newConversionBtn.addEventListener('click', resetToDropZone);
 retryBtn.addEventListener('click', resetToDropZone);
 
 // ===========================
-// Format Selection
+// Category Tabs Switching (Video vs Audio)
 // ===========================
-formatOptions.addEventListener('click', (e) => {
+categoryTabs.addEventListener('click', (e) => {
+  const tab = e.target.closest('.category-tab');
+  if (!tab) return;
+
+  const category = tab.dataset.category;
+  if (category === activeCategory) return;
+
+  activeCategory = category;
+  document.querySelectorAll('.category-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+
+  if (category === 'video') {
+    videoFormatOptions.classList.remove('hidden');
+    audioFormatOptions.classList.add('hidden');
+    formatLabel.textContent = 'Convert to Video:';
+
+    const activeBtn = videoFormatOptions.querySelector('.format-btn.active') || videoFormatOptions.querySelector('.format-btn');
+    if (activeBtn) {
+      selectedFormat = activeBtn.dataset.format;
+      activeBtn.classList.add('active');
+    } else {
+      selectedFormat = 'avi';
+    }
+    updateBadge('Video Conversion', selectedFormat.toUpperCase());
+  } else {
+    videoFormatOptions.classList.add('hidden');
+    audioFormatOptions.classList.remove('hidden');
+    formatLabel.textContent = 'Extract to Audio:';
+
+    const activeBtn = audioFormatOptions.querySelector('.format-btn.active') || audioFormatOptions.querySelector('.format-btn');
+    if (activeBtn) {
+      selectedFormat = activeBtn.dataset.format;
+      activeBtn.classList.add('active');
+    } else {
+      selectedFormat = 'mp3';
+    }
+    updateBadge('Audio Extraction', selectedFormat.toUpperCase());
+  }
+});
+
+// ===========================
+// Format Button Selection
+// ===========================
+videoFormatOptions.addEventListener('click', (e) => {
   const btn = e.target.closest('.format-btn');
   if (!btn) return;
 
-  document.querySelectorAll('#formatOptions .format-btn').forEach(b => b.classList.remove('active'));
+  videoFormatOptions.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedFormat = btn.dataset.format;
+  updateBadge('Video Conversion', selectedFormat.toUpperCase());
+});
+
+audioFormatOptions.addEventListener('click', (e) => {
+  const btn = e.target.closest('.format-btn');
+  if (!btn) return;
+
+  audioFormatOptions.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedFormat = btn.dataset.format;
+  const badgeTitle = (currentFileType === 'video') ? 'Audio Extraction' : 'Audio Conversion';
+  updateBadge(badgeTitle, selectedFormat.toUpperCase());
 });
 
 // ===========================
@@ -202,7 +315,7 @@ convertBtn.addEventListener('click', async () => {
     currentConversionId = data.conversionId;
     progressLabel.textContent = currentFileType === 'document'
       ? 'Converting document...'
-      : 'Converting...';
+      : `Converting to ${selectedFormat.toUpperCase()}...`;
 
     // Poll for progress
     pollProgress();
@@ -228,6 +341,8 @@ function pollProgress() {
           else if (pct < 60) progressLabel.textContent = 'Converting to HTML...';
           else if (pct < 90) progressLabel.textContent = 'Generating PDF...';
           else progressLabel.textContent = 'Finalizing...';
+        } else {
+          progressLabel.textContent = `Converting to ${selectedFormat.toUpperCase()} (${pct}%)...`;
         }
       } else if (data.status === 'done') {
         clearInterval(progressPollInterval);

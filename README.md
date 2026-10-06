@@ -6,10 +6,10 @@ FileForge is a beautiful, local-first file converter that prioritizes privacy an
 
 ## Features
 
-- **Media Conversion**: Convert video and audio files (MP4, AVI, MKV, MOV, WebM) to various audio formats (MP3, WAV, AAC, OGG, FLAC) using FFmpeg.
+- **Video & Audio Conversion**: Convert video files (MP4, AVI, MKV, MOV, WebM) to other video formats (AVI, MKV, MP4, MOV, WebM) or extract audio (MP3, WAV, AAC, OGG, FLAC) with FFmpeg.
 - **Document Conversion**: Convert Word documents (.doc, .docx) to beautifully formatted PDFs using Mammoth and Puppeteer.
-- **100% Local**: All conversions happen locally on your machine. No data leaves your computer.
-- **Beautiful UI**: Enjoy a modern, glassmorphism-inspired design with drag-and-drop support, smooth animations, and real-time progress tracking.
+- **100% Local & Fast**: All conversions happen locally on your machine. No data leaves your computer.
+- **Beautiful UI**: Modern glassmorphism-inspired design with category switching, drag-and-drop support, smooth animations, and real-time progress tracking.
 
 ## Prerequisites
 

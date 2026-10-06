@@ -63,15 +63,24 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const allowedMimes = [
       // Media
-      'video/mp4', 'video/mpeg', 'video/avi', 'video/x-msvideo',
-      'video/quicktime', 'video/x-matroska', 'video/webm',
+      'video/mp4', 'video/mpeg', 'video/avi', 'video/x-msvideo', 'video/msvideo',
+      'video/quicktime', 'video/x-matroska', 'video/webm', 'video/x-flv', 'video/x-ms-wmv',
       'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/flac',
-      'audio/aac', 'audio/mp4',
+      'audio/aac', 'audio/mp4', 'audio/x-m4a', 'audio/m4a',
       // Documents
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
       'application/msword', // .doc
+      'application/octet-stream'
     ];
-    if (allowedMimes.includes(file.mimetype)) {
+
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExts = [
+      '.mp4', '.avi', '.mkv', '.mov', '.webm', '.mpeg', '.mpg', '.flv', '.wmv', '.m4v',
+      '.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a',
+      '.docx', '.doc'
+    ];
+
+    if (allowedMimes.includes(file.mimetype) || allowedExts.includes(ext)) {
       cb(null, true);
     } else {
       cb(new Error('Unsupported file type: ' + file.mimetype), false);
@@ -87,11 +96,19 @@ const activeConversions = new Map();
 
 // MIME types map
 const mimeTypesMap = {
+  // Audio
   mp3: 'audio/mpeg',
   wav: 'audio/wav',
   aac: 'audio/aac',
   ogg: 'audio/ogg',
   flac: 'audio/flac',
+  // Video
+  avi: 'video/x-msvideo',
+  mkv: 'video/x-matroska',
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+  // Document
   pdf: 'application/pdf'
 };
 
@@ -99,20 +116,33 @@ const mimeTypesMap = {
 // FFmpeg helpers (media conversion)
 // ============================================================
 function getFFmpegArgs(inputPath, outputPath, format) {
-  const baseArgs = ['-i', inputPath, '-vn', '-map_metadata', '-1', '-y'];
   switch (format) {
+    // --- Audio extraction / conversion ---
     case 'mp3':
-      return [...baseArgs, '-acodec', 'libmp3lame', '-ab', '192k', '-ar', '44100', '-ac', '2', outputPath];
+      return ['-i', inputPath, '-vn', '-acodec', 'libmp3lame', '-ab', '192k', '-ar', '44100', '-ac', '2', '-map_metadata', '-1', '-y', outputPath];
     case 'wav':
-      return [...baseArgs, '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', outputPath];
+      return ['-i', inputPath, '-vn', '-acodec', 'pcm_s16le', '-ar', '44100', '-ac', '2', '-map_metadata', '-1', '-y', outputPath];
     case 'aac':
-      return [...baseArgs, '-acodec', 'aac', '-ab', '192k', '-ar', '44100', '-ac', '2', outputPath];
+      return ['-i', inputPath, '-vn', '-acodec', 'aac', '-ab', '192k', '-ar', '44100', '-ac', '2', '-map_metadata', '-1', '-y', outputPath];
     case 'ogg':
-      return [...baseArgs, '-acodec', 'libvorbis', '-ab', '192k', '-ar', '44100', '-ac', '2', outputPath];
+      return ['-i', inputPath, '-vn', '-acodec', 'libvorbis', '-ab', '192k', '-ar', '44100', '-ac', '2', '-map_metadata', '-1', '-y', outputPath];
     case 'flac':
-      return [...baseArgs, '-acodec', 'flac', '-ar', '44100', '-ac', '2', outputPath];
+      return ['-i', inputPath, '-vn', '-acodec', 'flac', '-ar', '44100', '-ac', '2', '-map_metadata', '-1', '-y', outputPath];
+
+    // --- Video conversion ---
+    case 'avi':
+      return ['-i', inputPath, '-c:v', 'mpeg4', '-vtag', 'xvid', '-q:v', '3', '-c:a', 'libmp3lame', '-b:a', '192k', '-y', outputPath];
+    case 'mkv':
+      return ['-i', inputPath, '-c:v', 'libx264', '-preset', 'fast', '-crf', '22', '-c:a', 'aac', '-b:a', '192k', '-y', outputPath];
+    case 'mp4':
+      return ['-i', inputPath, '-c:v', 'libx264', '-preset', 'fast', '-crf', '22', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', '-y', outputPath];
+    case 'mov':
+      return ['-i', inputPath, '-c:v', 'libx264', '-preset', 'fast', '-crf', '22', '-c:a', 'aac', '-b:a', '192k', '-y', outputPath];
+    case 'webm':
+      return ['-i', inputPath, '-c:v', 'libvpx-vp9', '-crf', '30', '-b:v', '0', '-c:a', 'libopus', '-b:a', '128k', '-y', outputPath];
+
     default:
-      return [...baseArgs, outputPath];
+      return ['-i', inputPath, '-y', outputPath];
   }
 }
 

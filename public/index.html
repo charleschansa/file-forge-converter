@@ -43,16 +43,20 @@
           <h2>Drop your file here</h2>
           <p>or <span class="browse-link" id="browseLink">browse</span> to choose a file</p>
           <div class="supported-badges">
+            <span class="badge badge-video">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              Video
+            </span>
             <span class="badge badge-media">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Media
+              Audio
             </span>
             <span class="badge badge-doc">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Documents
             </span>
           </div>
-          <p class="supported-formats">MP4, AVI, MKV, MOV, WebM, MP3, WAV, FLAC · DOCX → PDF</p>
+          <p class="supported-formats">MP4, AVI, MKV, MOV, WebM · MP3, WAV, FLAC · DOCX → PDF</p>
         </div>
         <input type="file" id="fileInput" accept="video/*,audio/*,.docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" hidden>
       </div>
@@ -88,32 +92,70 @@
 
         <!-- Conversion Type Badge -->
         <div class="conversion-badge" id="conversionBadge">
-          <span class="conversion-type" id="conversionType">Media Conversion</span>
+          <span class="conversion-type" id="conversionType">Video Conversion</span>
           <span class="conversion-arrow">→</span>
-          <span class="conversion-target" id="conversionTarget">Audio</span>
+          <span class="conversion-target" id="conversionTarget">AVI</span>
         </div>
 
         <!-- Format Selection (Media) -->
         <div class="format-section" id="mediaFormatSection">
-          <label class="format-label">Convert to:</label>
-          <div class="format-options" id="formatOptions">
-            <button class="format-btn active" data-format="mp3">
+          <!-- Category Tabs (shown for video inputs) -->
+          <div class="category-tabs" id="categoryTabs">
+            <button type="button" class="category-tab active" id="tabVideo" data-category="video">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <span>Video Formats</span>
+            </button>
+            <button type="button" class="category-tab" id="tabAudio" data-category="audio">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Extract Audio</span>
+            </button>
+          </div>
+
+          <label class="format-label" id="formatLabel">Convert to Video:</label>
+
+          <!-- Video Format Options -->
+          <div class="format-options" id="videoFormatOptions">
+            <button type="button" class="format-btn active" data-format="avi">
+              <span class="format-name">AVI</span>
+              <span class="format-desc">Classic video</span>
+            </button>
+            <button type="button" class="format-btn" data-format="mkv">
+              <span class="format-name">MKV</span>
+              <span class="format-desc">Matroska HD</span>
+            </button>
+            <button type="button" class="format-btn" data-format="mp4">
+              <span class="format-name">MP4</span>
+              <span class="format-desc">Universal video</span>
+            </button>
+            <button type="button" class="format-btn" data-format="mov">
+              <span class="format-name">MOV</span>
+              <span class="format-desc">QuickTime</span>
+            </button>
+            <button type="button" class="format-btn" data-format="webm">
+              <span class="format-name">WebM</span>
+              <span class="format-desc">Web video</span>
+            </button>
+          </div>
+
+          <!-- Audio Format Options -->
+          <div class="format-options hidden" id="audioFormatOptions">
+            <button type="button" class="format-btn" data-format="mp3">
               <span class="format-name">MP3</span>
               <span class="format-desc">Universal audio</span>
             </button>
-            <button class="format-btn" data-format="wav">
+            <button type="button" class="format-btn" data-format="wav">
               <span class="format-name">WAV</span>
               <span class="format-desc">Lossless audio</span>
             </button>
-            <button class="format-btn" data-format="aac">
+            <button type="button" class="format-btn" data-format="aac">
               <span class="format-name">AAC</span>
               <span class="format-desc">High quality</span>
             </button>
-            <button class="format-btn" data-format="ogg">
+            <button type="button" class="format-btn" data-format="ogg">
               <span class="format-name">OGG</span>
               <span class="format-desc">Open format</span>
             </button>
-            <button class="format-btn" data-format="flac">
+            <button type="button" class="format-btn" data-format="flac">
               <span class="format-name">FLAC</span>
               <span class="format-desc">Lossless HD</span>
             </button>
@@ -122,9 +164,9 @@
 
         <!-- Format Selection (Document) -->
         <div class="format-section hidden" id="docFormatSection">
-          <label class="format-label">Convert to:</label>
+          <label class="format-label">Convert to Document:</label>
           <div class="format-options format-options-single">
-            <button class="format-btn active format-btn-wide" data-format="pdf">
+            <button type="button" class="format-btn active format-btn-wide" data-format="pdf">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
